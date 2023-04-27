@@ -56,5 +56,5 @@ function DroneMap(props) {
 }
 
 export default GoogleApiWrapper({
-//   apiKey: "AIzaSyAPfy_2Iife07nPRB24iyJaAWuO2I7DeRY"
+//   apiKey: "Y"
 })(DroneMap);
