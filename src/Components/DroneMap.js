@@ -1,47 +1,57 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Map, InfoWindow, Marker, GoogleApiWrapper,Polyline } from "google-maps-react";
+import {
+  Map,
+  InfoWindow,
+  Marker,
+  GoogleApiWrapper,
+  Polyline,
+} from "google-maps-react";
 import "../App.css";
+import { useDispatch, useSelector } from "react-redux";
+import { resetData } from "../Redux/slices/app";
+
 function DroneMap(props) {
   const mapStyles = {
     width: "60%",
     height: "60%",
     marginLeft: "200px",
     marginTop: "50px",
-    position: 'relative'
+    position: "relative",
   };
-  // const [dronePosition, setDronePosition] = useState({
-  //   lat: 37.7749,
-  //   lng: -122.4194,
-  // });
-  const dummyData = [
-    { lat: 37.7749, lng: -122.4194, timestamp: 1640666400000 },
-    { lat: 37.7751, lng: -122.4196, timestamp: 1640666401000 },
-    { lat: 37.7753, lng: -122.4194, timestamp: 1640666402000 },
-    { lat: 37.7755, lng: -122.4196, timestamp: 1640666403000 },
-    { lat: 37.7757, lng: -122.4194, timestamp: 1640666404000 },
-    { lat: 37.7759, lng: -122.4196, timestamp: 1640666405000 },
-    { lat: 37.7761, lng: -122.4194, timestamp: 1640666406000 },
-    { lat: 37.7763, lng: -122.4196, timestamp: 1640666407000 },
-    { lat: 37.7765, lng: -122.4194, timestamp: 1640666408000 },
-    { lat: 37.7767, lng: -122.4196, timestamp: 1640666409000 },
-    { lat: 37.7769, lng: -122.4194, timestamp: 1640666410000 },
-    { lat: 37.7767, lng: -122.4192, timestamp: 1640666411000 },
-    { lat: 37.7765, lng: -122.4190, timestamp: 1640666412000 },
-    { lat: 37.7763, lng: -122.4192, timestamp: 1640666413000 },
-    { lat: 37.7761, lng: -122.4190, timestamp: 1640666414000 },
-    { lat: 37.7759, lng: -122.4192, timestamp: 1640666415000 },
-    { lat: 37.7757, lng: -122.4190, timestamp: 1640666416000 },
-    { lat: 37.7755, lng: -122.4192, timestamp: 1640666417000 },
-    { lat: 37.7753, lng: -122.4190, timestamp: 1640666418000 },
-    { lat: 37.7751, lng: -122.4192, timestamp: 1640666419000 },
-  ];
+  const { timeSeriesData } = useSelector((state) => state.app);
+  const dispatch = useDispatch();
+  console.log(timeSeriesData, "time Series data");
 
-  const [dronePosition, setDronePosition] = useState(dummyData[0]);
+  const [dronePosition, setDronePosition] = useState({
+    lat: 37.7749,
+    lng: -122.4194,
+    timestamp: 1640666400000,
+  });
   const [isRunning, setIsRunning] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [intervalId, setIntervalId] = useState(null);
   const [dronePath, setDronePath] = useState([]);
-
+  const [selectedFile, setSelectedFile] = useState();
+  const updateDronePath = (data) => {
+    setDronePath(data);
+    setDronePosition(data[0]);
+    setCurrentIndex(0);
+  };
+  useEffect(() => {
+    if (timeSeriesData && timeSeriesData.length > 0) {
+      const fileInput = document.getElementById("file-input");
+      fileInput.value = "";
+      // alert("File upload is not allowed when timeseries data is present.");
+      const data = timeSeriesData.map((item) => ({
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lng),
+        timestamp: parseInt(item.timestamp),
+      }));
+      updateDronePath(data);
+    } else if (selectedFile) {
+      readCSVFile(selectedFile);
+    }
+  }, [timeSeriesData, selectedFile]);
   const readCSVFile = (file) => {
     const reader = new FileReader();
     reader.readAsText(file);
@@ -50,31 +60,32 @@ function DroneMap(props) {
       const lines = csv.split("\n");
       const data = lines.slice(1).map((line) => {
         const [lat, lng, timestamp] = line.split(",");
-        console.log(lat, lng, timestamp, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+        console.log(lat, lng, timestamp, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         return {
           lat: parseFloat(lat),
           lng: parseFloat(lng),
           timestamp: parseInt(timestamp),
         };
       });
-      setDronePath(data);
+      updateDronePath(data);
     };
   };
-console.log(dronePath, "droine path")
+  console.log(dronePath, "droine path");
+  const updateDronePosition = () => {
+    setCurrentIndex((prevIndex) => {
+      if (prevIndex === dronePath.length - 1) {
+        clearInterval(intervalId);
+        setIsRunning(false);
+        return prevIndex;
+      } else {
+        return prevIndex + 1;
+      }
+    });
+  };
   const simulateDroneMotion = () => {
-    if (!isRunning) {
+    if (!isRunning && dronePath.length > 0) {
       setIsRunning(true);
-      const id = setInterval(() => {
-        setCurrentIndex((prevIndex) => {
-          if (prevIndex === dummyData.length - 1) {
-            clearInterval(intervalId);
-            setIsRunning(false);
-            return prevIndex;
-          } else {
-            return prevIndex + 1;
-          }
-        });
-      }, 1000);
+      const id = setInterval(updateDronePosition, 1000);
       setIntervalId(id);
     } else {
       setIsRunning(false);
@@ -84,26 +95,22 @@ console.log(dronePath, "droine path")
 
   useEffect(() => {
     if (dronePath.length > 0) {
-      setDronePosition(dronePath[0]);
-    }
-  }, [dronePath]);
-
-
-useEffect(() => {
-    if (dronePath.length > 0) {
       setDronePosition(dronePath[currentIndex]);
     }
   }, [currentIndex, dronePath]);
 
-
-
+  console.log(dronePosition, "droneposition");
   return (
     <>
       <div>
-      <div className="mb-5">
+        <div className="mb-5">
           <input
             type="file"
-            onChange={(e) => readCSVFile(e.target.files[0])}
+            id="file-input"
+            onChange={(e) => {
+              setSelectedFile(e.target.files[0]);
+              dispatch(resetData([]));
+            }}
           />
           <button className="simulate-button" onClick={simulateDroneMotion}>
             {isRunning ? "Stop" : "Simulate"}
@@ -112,7 +119,7 @@ useEffect(() => {
         {dronePath.length > 0 && (
           <Map
             google={props.google}
-            zoom={17}
+            zoom={15}
             style={mapStyles}
             initialCenter={dronePath[0]}
           >

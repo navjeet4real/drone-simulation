@@ -1,70 +1,134 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import * as Yup from "yup";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useDispatch } from "react-redux";
+import { Button, Stack } from "@mui/material";
+import { setData } from "../Redux/slices/app";
+import { RHFTextField } from "./FormComponents";
+import FormProvider from "./FormComponents/FormProvider";
 
-const InputForm = ({ onSimulate }) => {
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [timestamp, setTimestamp] = useState('');
-  const [file, setFile] = useState(null);
+const InputForm = () => {
+  const dispatch = useDispatch();
+  const [timeSeriesArray, setTimeSeriesArray] = useState([]);
 
-  const handleLatitudeChange = (event) => {
-    setLatitude(event.target.value);
+  const TimeSeriesSchema = Yup.object().shape({
+    lat: Yup.string(),
+    lng: Yup.string(),
+    timestamp: Yup.string(),
+  });
+
+  const defaultValues = {
+    lat: "",
+    lng: "",
+    timestamp: "",
   };
 
-  const handleLongitudeChange = (event) => {
-    setLongitude(event.target.value);
+  const methods = useForm({
+    resolver: yupResolver(TimeSeriesSchema),
+    defaultValues,
+  });
+  const {
+    reset,
+    setError,
+    handleSubmit,
+    formState: { errors },
+  } = methods;
+
+  const addData = () => {
+    const { lat, lng, timestamp } = methods.getValues();
+    const newData = {
+      lat: lat,
+      lng: lng,
+      timestamp: timestamp,
+    };
+
+    setTimeSeriesArray([...timeSeriesArray, newData]);
+    reset(defaultValues);
+    // }
   };
 
-  const handleTimestampChange = (event) => {
-    setTimestamp(event.target.value);
+  console.log(timeSeriesArray, "timeSeriesArray");
+  const onSubmit = async (data) => {
+    try {
+      console.log(data, "data--------------------");
+      dispatch(setData(timeSeriesArray));
+    } catch (error) {
+      console.error(error);
+      reset();
+      setError("afterSubmit", {
+        ...error,
+        message: error.message,
+      });
+    }
   };
-
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
-
-  const handleSimulate = (event) => {
-    event.preventDefault();
-    onSimulate({ latitude, longitude, timestamp, file });
-  };
-
   return (
-    <form onSubmit={handleSimulate}>
-      <div>
-        <label htmlFor="latitude">Latitude:</label>
-        <input
-          type="number"
-          id="latitude"
-          value={latitude}
-          onChange={handleLatitudeChange}
-          required
+    <>
+      <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+        <h2>Add time Series Data</h2>
+
+        <p className="form-label">Longitutde</p>
+        <RHFTextField
+          name="lat"
+          className="input_field"
+          placeholder="e.g. 37.7749"
         />
-      </div>
-      <div>
-        <label htmlFor="longitude">Longitude:</label>
-        <input
-          type="number"
-          id="longitude"
-          value={longitude}
-          onChange={handleLongitudeChange}
-          required
+
+        <p className="form-label">Latitude</p>
+        <RHFTextField
+          name="lng"
+          className="input_field"
+          placeholder="e.g. -122.4194"
         />
-      </div>
-      <div>
-        <label htmlFor="timestamp">Timestamp:</label>
-        <input
-          type="datetime-local"
-          id="timestamp"
-          value={timestamp}
-          onChange={handleTimestampChange}
-          required
+        <p className="form-label">Time</p>
+        <RHFTextField
+          name="timestamp"
+          className="input_field"
+          placeholder="e.g. 1640666400000"
         />
-      </div>
-      <div>
-        <label htmlFor="file">Upload CSV File:</label>
-        <input type="file" id="file" accept=".csv" onChange={handleFileChange} />
-      </div>
-      <button type="submit">Simulate</button>
-    </form>
+
+        <Button
+          variant="outlined"
+          onClick={() => {
+            addData();
+          }}
+          className="btn2"
+        >
+          {/* <AddIcon /> */}
+          Add Data
+        </Button>
+        <div>
+          {timeSeriesArray.length > 0 && (
+            <>
+              <Stack>
+                <h4>Time Series Data</h4>
+                <p>lat lng timestamp</p>
+              </Stack>
+            </>
+          )}
+          {timeSeriesArray.length > 0 &&
+            timeSeriesArray.map((item, index) => {
+              return (
+                <>
+                  <div key={`inspection-${index}`} className="card">
+                    <div>
+                      <p>
+                        {item.lat} {item.lng} {item.time}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              );
+            })}
+        </div>
+
+        <div className="Form_continue">
+          <Button id="submitBTN" type="submit" className="btn">
+            Continue
+          </Button>
+        </div>
+      </FormProvider>
+    </>
   );
 };
 
