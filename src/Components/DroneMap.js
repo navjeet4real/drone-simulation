@@ -1,14 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Map,
-  InfoWindow,
-  Marker,
-  GoogleApiWrapper,
-  Polyline,
-} from "google-maps-react";
+import React, { useEffect, useState } from "react";
+import { Map, Marker, GoogleApiWrapper, Polyline } from "google-maps-react";
 import "../App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { resetData } from "../Redux/slices/app";
+import markerIcon from "../Image/drone.png";
 
 function DroneMap(props) {
   const mapStyles = {
@@ -18,9 +13,16 @@ function DroneMap(props) {
     marginTop: "50px",
     position: "relative",
   };
+  const markerStyle = {
+    width: "30px",
+    height: "30px",
+    backgroundImage: `url(${markerIcon})`,
+    backgroundSize: "cover",
+    borderRadius: "50%",
+    cursor: "pointer",
+  };
   const { timeSeriesData } = useSelector((state) => state.app);
   const dispatch = useDispatch();
-  console.log(timeSeriesData, "time Series data");
 
   const [dronePosition, setDronePosition] = useState({
     lat: 37.7749,
@@ -41,7 +43,6 @@ function DroneMap(props) {
     if (timeSeriesData && timeSeriesData.length > 0) {
       const fileInput = document.getElementById("file-input");
       fileInput.value = "";
-      // alert("File upload is not allowed when timeseries data is present.");
       const data = timeSeriesData.map((item) => ({
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lng),
@@ -60,7 +61,6 @@ function DroneMap(props) {
       const lines = csv.split("\n");
       const data = lines.slice(1).map((line) => {
         const [lat, lng, timestamp] = line.split(",");
-        console.log(lat, lng, timestamp, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         return {
           lat: parseFloat(lat),
           lng: parseFloat(lng),
@@ -70,7 +70,6 @@ function DroneMap(props) {
       updateDronePath(data);
     };
   };
-  console.log(dronePath, "droine path");
   const updateDronePosition = () => {
     setCurrentIndex((prevIndex) => {
       const targetTimestamp = dronePath[prevIndex + 1]?.timestamp;
@@ -105,11 +104,10 @@ function DroneMap(props) {
     }
   }, [currentIndex, dronePath]);
 
-  console.log(dronePosition, "droneposition");
   return (
     <>
-      <div  >
-        <div className="mb-5">
+      <div>
+        <div className="">
           <input
             type="file"
             id="file-input"
@@ -133,9 +131,14 @@ function DroneMap(props) {
               <Marker
                 key={`${dronePosition.lat}-${dronePosition.lng}`}
                 position={dronePosition}
+                style={markerStyle}
+                icon={{
+                  url: markerIcon,
+                  scaledSize: new window.google.maps.Size(30, 30),
+                }}
               />
-              
             )}
+
             <Polyline
               path={dronePath.slice(0, currentIndex + 1)}
               strokeColor="#333"

@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   timeSeriesData: [],
+  Markers: [],
 };
 
 const slice = createSlice({
@@ -12,12 +13,14 @@ const slice = createSlice({
             state.timeSeriesData  = action.payload
         },
         resetData(state, action){
-            console.log(state.timeSeriesData, "ffffffffffffffff", action.payload)
             state.timeSeriesData = action.payload
+        },
+        MapMarker(state, action){
+            state.Markers = action.payload
         }
    }
 });
 
 export default slice.reducer;
 
-export const {setData, resetData} = slice.actions
+export const {setData, resetData, MapMarker} = slice.actions

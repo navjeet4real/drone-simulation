@@ -51,7 +51,6 @@ const InputForm = () => {
   console.log(timeSeriesArray, "timeSeriesArray");
   const onSubmit = async (data) => {
     try {
-      console.log(data, "data--------------------");
       dispatch(setData(timeSeriesArray));
     } catch (error) {
       console.error(error);
@@ -108,12 +107,10 @@ const InputForm = () => {
             timeSeriesArray.map((item, index) => {
               return (
                 <>
-                  <div key={`inspection-${index}`} className="card">
-                    <div>
+                  <div key={`data-${index}`}>
                       <p>
                         {item.lat} {item.lng} {item.time}
                       </p>
-                    </div>
                   </div>
                 </>
               );
