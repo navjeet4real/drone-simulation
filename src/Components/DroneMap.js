@@ -73,13 +73,19 @@ function DroneMap(props) {
   console.log(dronePath, "droine path");
   const updateDronePosition = () => {
     setCurrentIndex((prevIndex) => {
-      if (prevIndex === dronePath.length - 1) {
+      const targetTimestamp = dronePath[prevIndex + 1]?.timestamp;
+      let nextIndex = prevIndex;
+      while (
+        nextIndex < dronePath.length - 1 &&
+        dronePath[nextIndex + 1].timestamp <= targetTimestamp
+      ) {
+        nextIndex++;
+      }
+      if (nextIndex === dronePath.length - 1) {
         clearInterval(intervalId);
         setIsRunning(false);
-        return prevIndex;
-      } else {
-        return prevIndex + 1;
       }
+      return nextIndex;
     });
   };
   const simulateDroneMotion = () => {
@@ -102,7 +108,7 @@ function DroneMap(props) {
   console.log(dronePosition, "droneposition");
   return (
     <>
-      <div>
+      <div  >
         <div className="mb-5">
           <input
             type="file"
@@ -128,6 +134,7 @@ function DroneMap(props) {
                 key={`${dronePosition.lat}-${dronePosition.lng}`}
                 position={dronePosition}
               />
+              
             )}
             <Polyline
               path={dronePath.slice(0, currentIndex + 1)}
